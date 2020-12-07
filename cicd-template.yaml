@@ -320,6 +320,8 @@ objects:
             oc expose svc/tasks -n ${DEV_PROJECT}
             oc set probe dc/tasks --readiness --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n ${DEV_PROJECT}
             oc set probe dc/tasks --liveness  --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n ${DEV_PROJECT}
+            oc set env dc/tasks KUBERNETES_NAMESPACE=${DEV_PROJECT}
+            oc policy add-role-to-user view system:serviceaccount:${DEV_PROJECT}:default -n ${DEV_PROJECT}
             oc rollout cancel dc/tasks -n ${STAGE_PROJECT}
 
             # stage project
@@ -327,6 +329,8 @@ objects:
             oc expose svc/tasks -n ${STAGE_PROJECT}
             oc set probe dc/tasks --readiness --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n ${STAGE_PROJECT}
             oc set probe dc/tasks --liveness  --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n ${STAGE_PROJECT}
+            oc set env dc/tasks KUBERNETES_NAMESPACE=${STAGE_PROJECT}
+            oc policy add-role-to-user view system:serviceaccount:${STAGE_PROJECT}:default -n ${STAGE_PROJECT}
             oc rollout cancel dc/tasks -n ${DEV_PROJECT}
 
             # deploy gogs
@@ -353,7 +357,7 @@ objects:
               oc process -f https://raw.githubusercontent.com/siamaksade/sonarqube/8/sonarqube-persistent-template.yaml | oc create -f -
             fi
 
-            oc set resources dc/sonarqube --limits=cpu=1,memory=2.5Gi --requests=cpu=200m,memory=512Mi
+            oc set resources deployment/sonarqube --limits=cpu=1,memory=2.5Gi --requests=cpu=200m,memory=512Mi
 
             if [ "${EPHEMERAL}" == "true" ] ; then
               oc new-app -f https://raw.githubusercontent.com/OpenShiftDemos/nexus/master/nexus3-template.yaml --param=NEXUS_VERSION=3.13.0 --param=MAX_MEMORY=2Gi
